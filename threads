@@ -9,8 +9,7 @@ struct shared_data{
 struct shared_data *counter;
 pthread_mutex_t lock;
 
-void *thread1(void *arg)
-{
+void *thread1(void *arg){
     int updateLoop = 2000000;
     int bonus = 0;
     int updatesCount = 0;
