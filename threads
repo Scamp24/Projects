@@ -16,13 +16,13 @@ void *thread1(void *arg){
     for (int i = 0; i < updateLoop; i++){
         
         /* entry section */
-        int rc = pthread_mutex_trylock(&lock);
+        int checkLock = pthread_mutex_trylock(&lock);
 
         /* critical section */
         updatesCount+=1;
         counter->value += 1;
         
-        if (rc == 0){
+        if (checkLock == 0){
            
             if ((counter->value % 100) == 0){
                 counter->value += 100;
@@ -48,10 +48,10 @@ void *thread2(void *arg){
     for (i = 0; i < 2000000; i++){
 
         /* entry section */
-        int rc = pthread_mutex_trylock(&lock);
+        int checkLock = pthread_mutex_trylock(&lock);
 
         /* critical section */
-        if (rc == 0){
+        if (checkLock == 0){
             counter->value += 1;
 
             /* exit section */
