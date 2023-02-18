@@ -1,0 +1,98 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+struct shared_data{
+    int value; /* shared variable to store result */
+};
+
+struct shared_data *counter;
+pthread_mutex_t lock;
+
+void *thread1(void *arg)
+{
+    int updateLoop = 2000000;
+    int bonus = 0;
+    int updatesCount = 0;
+    for (int i = 0; i < updateLoop; i++){
+        
+        /* entry section */
+        int rc = pthread_mutex_trylock(&lock);
+
+        /* critical section */
+        updatesCount+=1;
+        counter->value += 1;
+        
+        if (rc == 0){
+           
+            if ((counter->value % 100) == 0){
+                counter->value += 100;
+                updatesCount += 100;
+                bonus++;
+                updateLoop -= 100;
+            } else {
+                //counter->value += 1;
+            }
+
+            /* exit section */
+            pthread_mutex_unlock(&lock);
+        }
+    }
+
+    /* remainder section */
+    printf("I'm thread1, I did %d updates and I got a bonus for %d times, counter = %d\n", updatesCount, bonus, counter->value);
+    pthread_exit(NULL);
+}
+
+void *thread2(void *arg){
+    int i;
+    for (i = 0; i < 2000000; i++){
+
+        /* entry section */
+        int rc = pthread_mutex_trylock(&lock);
+
+        /* critical section */
+        if (rc == 0){
+            counter->value += 1;
+
+            /* exit section */
+            pthread_mutex_unlock(&lock);
+        }
+    }
+
+    /* remainder section */
+    printf("I'm thread2, I did %d updates, counter = %d\n", i, counter-> value);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]){
+    pthread_t t1, t2;
+    pthread_attr_t attr[2];
+
+    /* Allocate memory for shared data */
+    counter = (struct shared_data *)malloc(sizeof(struct shared_data));
+    counter->value = 0;
+
+    /* Initialize the mutex */
+    pthread_mutex_init(&lock, NULL);
+
+    /* Schedule t1 and t2 independently */
+    pthread_attr_init(&attr[0]);
+    pthread_attr_setscope(&attr[0], PTHREAD_SCOPE_SYSTEM);
+
+    /* Create t1 and t2 */
+    pthread_create(&t1, &attr[0], thread1, NULL);
+    pthread_create(&t2, &attr[0], thread2, NULL);
+
+    /* Wait for t1 and t2 to finish */
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+
+    /* Destroy the mutex */
+    pthread_mutex_destroy(&lock);
+
+    /* Free the allocated memory */
+    free(counter);
+
+    pthread_exit(NULL);
+}
